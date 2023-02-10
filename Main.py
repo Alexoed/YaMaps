@@ -54,8 +54,7 @@ def main():
         if redraw:
             print("\rДельта:", delta, end="")
             picture.set_picture(pygame.image.load(
-                generator.get_from_toponym(toponym,
-                                           str(delta / 100_000))[1]
+                generator.get_from_cords(x, y, str(delta / 100_000))[1]
             ))
             redraw = False
         screen.fill(pygame.Color("black"))
