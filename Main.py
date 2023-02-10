@@ -29,7 +29,7 @@ def main():
     screen = pygame.display.set_mode(screen_size)
     clock = pygame.time.Clock()
     toponym = "Кириши, ленинградская 6"
-    delta = 20
+    delta = 25
 
     generator = ImageGenerator()
     picture = Picture(pygame.image.load(
@@ -44,10 +44,10 @@ def main():
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_PAGEUP:
-                    delta = min(max(delta + 20, 20), 100_000)
+                    delta = min(max(delta * 2, 12.5), 6_553_600)
                     redraw = True
                 elif event.key == pygame.K_PAGEDOWN:
-                    delta = min(max(delta - 20, 20), 100_000)
+                    delta = min(max(delta / 2, 12.5), 6_553_600)
                     redraw = True
                 elif event.key == pygame.K_r:
                     redraw = True
