@@ -13,6 +13,7 @@ class ImageGenerator:
         file = open("key.txt", mode="rt")
         self.api_key = file.read().strip()
         file.close()
+        self.pos = (0, 0)
 
     def get_from_toponym(self, address: str, delta):
         geocoder_params = {
@@ -31,9 +32,9 @@ class ImageGenerator:
         toponym = json_response["response"]["GeoObjectCollection"][
             "featureMember"][0]["GeoObject"]
         toponym_coodrinates = toponym["Point"]["pos"]
-        top_longitude, top_lattitude = toponym_coodrinates.split(" ")
+        self.pos = toponym_coodrinates.split(" ")
 
-        return self.get_from_cords(top_longitude, top_lattitude, delta)
+        return self.get_from_cords(*self.pos, delta)
 
     def get_from_cords(self, longitude, lattitude, delta):
         map_params = {
@@ -52,6 +53,9 @@ class ImageGenerator:
             print("Ошибка записи временного файла:", ex)
             sys.exit(2)
         return response.content, map_file
+
+    def get_position(self):
+        return self.pos
 
 
 def main():

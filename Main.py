@@ -35,11 +35,29 @@ def main():
     picture = Picture(pygame.image.load(
         generator.get_from_toponym(toponym, str(delta / 100_000))[1]
     ))
+    x, y = generator.get_position()
+    redraw = False
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_PAGEUP:
+                    delta = min(max(delta + 20, 20), 100_000)
+                    redraw = True
+                elif event.key == pygame.K_PAGEDOWN:
+                    delta = min(max(delta - 20, 20), 100_000)
+                    redraw = True
+                elif event.key == pygame.K_r:
+                    redraw = True
+        if redraw:
+            print("\rДельта:", delta, end="")
+            picture.set_picture(pygame.image.load(
+                generator.get_from_toponym(toponym,
+                                           str(delta / 100_000))[1]
+            ))
+            redraw = False
         screen.fill(pygame.Color("black"))
         interface.draw(screen)
 
