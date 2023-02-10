@@ -1,3 +1,4 @@
+import sys
 from io import BytesIO
 
 import requests
@@ -19,7 +20,8 @@ class ImageGenerator:
             "geocode": address,
             "format": "json"}
 
-        response = requests.get(self.geocoder_api_server, params=geocoder_params)
+        response = requests.get(self.geocoder_api_server,
+                                params=geocoder_params)
 
         if not response:
             # обработка ошибочной ситуации
@@ -29,9 +31,9 @@ class ImageGenerator:
         toponym = json_response["response"]["GeoObjectCollection"][
             "featureMember"][0]["GeoObject"]
         toponym_coodrinates = toponym["Point"]["pos"]
-        toponym_longitude, toponym_lattitude = toponym_coodrinates.split(" ")
+        top_longitude, top_lattitude = toponym_coodrinates.split(" ")
 
-        return self.get_from_cords(toponym_longitude, toponym_lattitude, delta)
+        return self.get_from_cords(top_longitude, top_lattitude, delta)
 
     def get_from_cords(self, longitude, lattitude, delta):
         map_params = {
@@ -41,12 +43,21 @@ class ImageGenerator:
         }
 
         response = requests.get(self.map_api_server, params=map_params)
-        return Image.open(BytesIO(response.content))
+        # Запишем полученное изображение в файл.
+        map_file = "map.png"
+        try:
+            with open(map_file, "wb") as file:
+                file.write(response.content)
+        except IOError as ex:
+            print("Ошибка записи временного файла:", ex)
+            sys.exit(2)
+        return response.content, map_file
 
 
 def main():
     ig = ImageGenerator()
-    ig.get_from_toponym("Кириши, ленинградская 6", "0.0002").show()
+    Image.open(BytesIO(ig.get_from_toponym("Кириши, ленинградская 6",
+                                           "0.0002")[0])).show()
 
 
 if __name__ == "__main__":
