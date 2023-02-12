@@ -14,8 +14,9 @@ class ImageGenerator:
         self.api_key = file.read().strip()
         file.close()
         self.pos = (0, 0)
+        self.layer = "map"
 
-    def get_from_toponym(self, address: str, delta, layer="map"):
+    def get_from_toponym(self, address: str, delta):
         geocoder_params = {
             "apikey": self.api_key,
             "geocode": address,
@@ -34,13 +35,13 @@ class ImageGenerator:
         toponym_coodrinates = toponym["Point"]["pos"]
         self.pos = toponym_coodrinates.split(" ")
 
-        return self.get_from_cords(*self.pos, delta, layer)
+        return self.get_from_cords(*self.pos, delta)
 
-    def get_from_cords(self, longitude, lattitude, delta, layer="map"):
+    def get_from_cords(self, longitude, lattitude, delta):
         map_params = {
             "ll": ",".join([longitude, lattitude]),
             "spn": ",".join([delta, delta]),
-            "l": layer
+            "l": self.layer
         }
 
         response = requests.get(self.map_api_server, params=map_params)
@@ -57,11 +58,14 @@ class ImageGenerator:
     def get_position(self):
         return self.pos
 
+    def set_layer(self, layer="map"):
+        self.layer = layer
+
 
 def main():
     ig = ImageGenerator()
     Image.open(BytesIO(ig.get_from_toponym("Кириши, ленинградская 6",
-                                           "0.0002", "sat")[0])).show()
+                                           "0.0002")[0])).show()
 
 
 if __name__ == "__main__":
