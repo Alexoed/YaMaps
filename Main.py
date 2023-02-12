@@ -43,6 +43,7 @@ def main():
     pressed_button = None
     redraw = False
     running = True
+    print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
