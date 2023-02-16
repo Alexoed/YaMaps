@@ -28,9 +28,10 @@ class Picture(pygame.sprite.Sprite):
 def main():
     pygame.init()
     screen_size = width, height = 600, 450
+    font = pygame.font.Font(None, 14)
     screen = pygame.display.set_mode(screen_size)
     clock = pygame.time.Clock()
-    toponym = "Кириши, ленинградская 6"
+    toponym = "Кириши, Ленинградская 6"
     delta = 25
 
     generator = ImageGenerator()
@@ -43,13 +44,34 @@ def main():
     pressed_button = None
     redraw = False
     running = True
-    print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
+    # print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
+
+    input_box = pygame.Rect(10, 410, 140, 32)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_inactive
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_PAGEUP:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        generator.get_from_toponym(toponym, str(delta / SCALE))
+                        x, y = generator.get_position()
+                        redraw = True
+                    elif event.key == pygame.K_BACKSPACE:
+                        toponym = toponym[:-1]
+                    else:
+                        toponym += event.unicode
+                elif event.key == pygame.K_PAGEUP:
                     delta = min(max(delta * 2, 12.5), 6_553_600)
                     redraw = True
                 elif event.key == pygame.K_PAGEDOWN:
@@ -112,6 +134,13 @@ def main():
             redraw = False
         screen.fill(pygame.Color("black"))
         interface.draw(screen)
+        txt_surface = font.render(toponym, True, color)
+        width = max(200, txt_surface.get_width() + 10)
+        input_box.w = width
+        # Blit the text.
+        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+        # Blit the input_box rect.
+        pygame.draw.rect(screen, color, input_box, 2)
 
         pygame.display.flip()
         clock.tick(FPS)

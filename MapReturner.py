@@ -15,6 +15,7 @@ class ImageGenerator:
         file.close()
         self.pos = (0, 0)
         self.layer = "map"
+        self.point = "0,0"
 
     def get_from_toponym(self, address: str, delta):
         geocoder_params = {
@@ -34,6 +35,7 @@ class ImageGenerator:
             "featureMember"][0]["GeoObject"]
         toponym_coodrinates = toponym["Point"]["pos"]
         self.pos = toponym_coodrinates.split(" ")
+        self.point = "{0},{1}".format(*self.pos)
 
         return self.get_from_cords(*self.pos, delta)
 
@@ -41,7 +43,8 @@ class ImageGenerator:
         map_params = {
             "ll": ",".join([longitude, lattitude]),
             "spn": ",".join([delta, delta]),
-            "l": self.layer
+            "l": self.layer,
+            "pt": "{0},pm2dgl".format(self.point)
         }
 
         response = requests.get(self.map_api_server, params=map_params)
