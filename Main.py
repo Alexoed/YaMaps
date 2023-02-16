@@ -85,6 +85,15 @@ def main():
                         movement_delta = HALF_SCALE
                     print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
                           end="")
+                elif event.key == pygame.K_SLASH:
+                    redraw = True
+                    try:
+                        layers = ('map', 'sat', 'sat,skl')
+                        generator.set_layer(layers[layers.index(
+                            generator.layer) + 1])
+                    except IndexError:
+                        generator.set_layer('map')
+
         if redraw:
             print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
                   end="")
