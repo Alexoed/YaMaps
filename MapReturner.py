@@ -35,8 +35,10 @@ class ImageGenerator:
             toponym = json_response["response"]["GeoObjectCollection"][
                 "featureMember"][0]["GeoObject"]
             toponym_coodrinates = toponym["Point"]["pos"]
-        except IndexError:
-            return print("Ошибка: не удалось найти")
+        except IndexError as ie:
+            return print(f"Ошибка: не удалось найти {ie}")
+        except KeyError as ke:
+            return print(f"Ошибка: не удалось найти {ke}")
         self.pos = toponym_coodrinates.split(" ")
         self.point = "{0},{1}".format(*self.pos)
 
