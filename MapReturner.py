@@ -1,6 +1,6 @@
 import sys
 from io import BytesIO
-
+from pprint import pprint
 import requests
 from PIL import Image
 
@@ -10,6 +10,7 @@ class ImageGenerator:
     map_api_server = "http://static-maps.yandex.ru/1.x/"
 
     def __init__(self):
+        self.address = "пока ничего не искалось"
         file = open("key.txt", mode="rt")
         self.api_key = file.read().strip()
         file.close()
@@ -31,6 +32,14 @@ class ImageGenerator:
             pass
 
         json_response = response.json()
+        try:
+            self.address = json_response["response"][
+                "GeoObjectCollection"]["featureMember"][0]["GeoObject"][
+                "metaDataProperty"]["GeocoderMetaData"][
+                "Address"]["formatted"]
+        except Exception as ex:
+            print(type(ex), ex)
+            self.address = "Увы, не нашлось"
         try:
             toponym = json_response["response"]["GeoObjectCollection"][
                 "featureMember"][0]["GeoObject"]
@@ -68,6 +77,9 @@ class ImageGenerator:
 
     def set_layer(self, layer="map"):
         self.layer = layer
+
+    def get_address(self):
+        return self.address
 
 
 def main():

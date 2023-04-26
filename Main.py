@@ -133,10 +133,21 @@ class Button(pygame.sprite.Sprite):
         ))
 
 
+def text_object(string, pos_x=0, pos_y=0, size=40, color=(0, 0, 0)):
+    """Создаёт и возвращает надпись"""
+    font = pygame.font.SysFont("ComicSans", size)
+    string_rendered = font.render(string, True, color)
+    text_position = string_rendered.get_rect()
+    text_position.x = pos_x
+    text_position.y = pos_y
+    return string_rendered, text_position
+
+
 def main():
     global screen_size, width, height, screen, clock
     font = pygame.font.Font(None, 14)
-    toponym = "Кириши, Ленинградская 6"
+    source_toponym = "Кириши, Ленинградская 6"
+    toponym = source_toponym
     delta = 25
 
     generator = ImageGenerator()
@@ -151,8 +162,10 @@ def main():
     running = True
     # print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
     buttons = [
-        Button((width - 200, height - 50), "вид")
+        Button((width - 200, height - 50), "вид"),
+        Button((width - 200, height - 100), "сброс")
     ]
+    found_address = text_object(generator.get_address(), size=12)
 
     input_box = pygame.Rect(10, 410, 140, 32)
     color_inactive = pygame.Color('lightskyblue3')
@@ -172,8 +185,12 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if active:
                     if event.key == pygame.K_RETURN:
-                        generator.get_from_toponym(toponym, str(delta / SCALE))
+                        generator.get_from_toponym(
+                            toponym, str(delta / SCALE))
                         x, y = generator.get_position()
+                        found_address = text_object(
+                            generator.get_address(), size=12
+                        )
                         redraw = True
                     elif event.key == pygame.K_BACKSPACE:
                         toponym = toponym[:-1]
@@ -230,6 +247,15 @@ def main():
                                     generator.layer) + 1])
                             except IndexError:
                                 generator.set_layer('map')
+                        elif button.get_text() == "сброс":
+                            toponym = source_toponym
+                            generator.get_from_toponym(
+                                toponym, str(delta / SCALE))
+                            x, y = generator.get_position()
+                            found_address = text_object(
+                                generator.get_address(), size=12
+                            )
+                            redraw = True
 
         if redraw:
             print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
@@ -257,6 +283,8 @@ def main():
         screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
         # Blit the input_box rect.
         pygame.draw.rect(screen, color, input_box, 2)
+        # Blit text
+        screen.blit(*found_address)
 
         pygame.display.flip()
         clock.tick(FPS)
