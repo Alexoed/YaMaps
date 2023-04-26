@@ -11,6 +11,8 @@ class ImageGenerator:
 
     def __init__(self):
         self.address = "пока ничего не искалось"
+        self.postal_code = ""
+        self.add_postal_code = False
         file = open("key.txt", mode="rt")
         self.api_key = file.read().strip()
         file.close()
@@ -32,6 +34,14 @@ class ImageGenerator:
             pass
 
         json_response = response.json()
+        try:
+            self.postal_code = json_response["response"][
+                "GeoObjectCollection"]["featureMember"][0]["GeoObject"][
+                "metaDataProperty"]["GeocoderMetaData"][
+                "Address"]["postal_code"]
+        except Exception as ex:
+            print(type(ex), ex)
+            self.postal_code = ""
         try:
             self.address = json_response["response"][
                 "GeoObjectCollection"]["featureMember"][0]["GeoObject"][
@@ -79,7 +89,13 @@ class ImageGenerator:
         self.layer = layer
 
     def get_address(self):
+        if self.add_postal_code:
+            return self.address + ", почтовый " \
+                                  "индекс: " + self.postal_code
         return self.address
+
+    def set_postalcode(self, value: bool):
+        self.add_postal_code = value
 
 
 def main():

@@ -160,10 +160,12 @@ def main():
     pressed_button = None
     redraw = False
     running = True
+    write_postalcode = False
     # print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
     buttons = [
         Button((width - 200, height - 50), "вид"),
-        Button((width - 200, height - 100), "сброс")
+        Button((width - 200, height - 100), "сброс"),
+        Button((width - 200, height - 150), "почтовый код")
     ]
     found_address = text_object(generator.get_address(), size=12)
 
@@ -256,6 +258,9 @@ def main():
                                 generator.get_address(), size=12
                             )
                             redraw = True
+                        elif button.get_text() == "почтовый код":
+                            write_postalcode = not write_postalcode
+                            generator.set_postalcode(write_postalcode)
 
         if redraw:
             print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
