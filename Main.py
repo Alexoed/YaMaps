@@ -261,6 +261,13 @@ def main():
                         elif button.get_text() == "почтовый код":
                             write_postalcode = not write_postalcode
                             generator.set_postalcode(write_postalcode)
+                            generator.get_from_toponym(
+                                toponym, str(delta / SCALE))
+                            x, y = generator.get_position()
+                            found_address = text_object(
+                                generator.get_address(), size=12
+                            )
+                            redraw = True
 
         if redraw:
             print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
