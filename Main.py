@@ -1,12 +1,62 @@
 import pygame
-
+import os
 from MapReturner import ImageGenerator
 
+
+pygame.init()
+screen_size = width, height = 600, 450
+screen = pygame.display.set_mode(screen_size)
+clock = pygame.time.Clock()
 
 FPS = 60
 interface = pygame.sprite.Group()
 SCALE = 100_000
 HALF_SCALE = SCALE / 2
+
+
+def inside(x, y, rect):
+    """Проверяет вхождение точки в прямоугольную область"""
+    return (rect.x <= x <= rect.x + rect.w and
+            rect.y <= y <= rect.y + rect.h)
+
+
+def load_image(name, colorkey=None):
+    """Загружает указанное изображение, если может.
+    Вырезает фон."""
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        raise Exception(f"Файл с изображением '{fullname}' не найден")
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+def mirror(image):
+    """Отражает изображение по вертикали (вдоль оси x)"""
+    return pygame.transform.flip(image, True, False)
+
+
+def cut_sheet(sheet, columns, rows, mirror_line=-1):
+    """Режет изображение на его составляющие"""
+    frames = []
+    rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                       sheet.get_height() // rows)
+    for j in range(rows):
+        temp = []
+        for i in range(columns):
+            frame_location = (rect.w * i, rect.h * j)
+            temp.append(sheet.subsurface(pygame.Rect(
+                frame_location, rect.size)))
+        frames.append(temp)
+        if j == mirror_line - 1:
+            frames.append([mirror(image) for image in temp])
+    return frames
 
 
 class Picture(pygame.sprite.Sprite):
@@ -25,12 +75,67 @@ class Picture(pygame.sprite.Sprite):
         self.image = image
 
 
+class Button(pygame.sprite.Sprite):
+    """Кнопка интерфейса"""
+    images = cut_sheet(load_image("button.png", -1), 2, 2)
+
+    def __init__(self, position, text, groups=interface):
+        """Инициализация кнопки, отрисовка текста на ней."""
+        super().__init__(groups)
+        self.state = self.images[0]
+        self.image = self.state[0].copy()
+        self.rect = self.image.get_rect()
+        self.shift = 2
+        # инициализация шрифта
+        font = pygame.font.SysFont("ComicSans", 28 - len(text))
+        self.string_text = text
+        self.text = font.render(text, True, (255, 255, 255))
+
+        self.rect.x, self.rect.y = position
+
+    def hold(self, pos):
+        """Нажимает на кнопку. Возвращает истину,
+        если нажата успешно."""
+        if inside(*pos, self.rect):
+            self.state = self.images[1]
+            self.shift = 0
+            return True
+        return False
+
+    def release(self, pos):
+        """Отпускает кнопку. Возвращает истину,
+        если нажатие завершено верно."""
+        if inside(*pos, self.rect):
+            self.state = self.images[0]
+            # если эта кнопка была нажата
+            if self.shift == 0:
+                self.shift = 2
+                return True
+        else:
+            self.state = self.images[0]
+        self.shift = 2
+        return False
+
+    def get_text(self):
+        """Возвращает свой текст"""
+        return self.string_text
+
+    def update(self, pos):
+        """Обновление состояния"""
+        # если наведён курсор, то выделится
+        if inside(*pos, self.rect):
+            self.image = self.state[1].copy()
+        else:
+            self.image = self.state[0].copy()
+        self.image.blit(self.text, (
+            (self.rect.w - self.text.get_width()) // 2 - self.shift,
+            (self.rect.h - self.text.get_height()) // 2 - self.shift
+        ))
+
+
 def main():
-    pygame.init()
-    screen_size = width, height = 600, 450
+    global screen_size, width, height, screen, clock
     font = pygame.font.Font(None, 14)
-    screen = pygame.display.set_mode(screen_size)
-    clock = pygame.time.Clock()
     toponym = "Кириши, Ленинградская 6"
     delta = 25
 
@@ -45,6 +150,9 @@ def main():
     redraw = False
     running = True
     # print(f"\rДельта: {delta}; Медленнее: {mov_slow}", end="")
+    buttons = [
+        Button((width - 200, height - 50), "вид")
+    ]
 
     input_box = pygame.Rect(10, 410, 140, 32)
     color_inactive = pygame.Color('lightskyblue3')
@@ -107,14 +215,21 @@ def main():
                         movement_delta = HALF_SCALE
                     print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
                           end="")
-                elif event.key == pygame.K_SLASH:
-                    redraw = True
-                    try:
-                        layers = ('map', 'sat', 'sat,skl')
-                        generator.set_layer(layers[layers.index(
-                            generator.layer) + 1])
-                    except IndexError:
-                        generator.set_layer('map')
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for button in buttons:
+                    if button.hold(event.pos):
+                        break
+            if event.type == pygame.MOUSEBUTTONUP:
+                for button in buttons:
+                    if button.release(event.pos):
+                        if button.get_text() == "вид":
+                            redraw = True
+                            try:
+                                layers = ('map', 'sat', 'sat,skl')
+                                generator.set_layer(layers[layers.index(
+                                    generator.layer) + 1])
+                            except IndexError:
+                                generator.set_layer('map')
 
         if redraw:
             print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
@@ -133,6 +248,7 @@ def main():
                                              str(delta / SCALE))[1]))
             redraw = False
         screen.fill(pygame.Color("black"))
+        interface.update(pygame.mouse.get_pos())
         interface.draw(screen)
         txt_surface = font.render(toponym, True, color)
         width = max(200, txt_surface.get_width() + 10)
