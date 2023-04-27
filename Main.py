@@ -145,6 +145,8 @@ def text_object(string, pos_x=0, pos_y=0, size=40, color=(0, 0, 0)):
 
 def main():
     global screen_size, width, height, screen, clock
+    half_width = width // 2
+    half_height = height // 2
     font = pygame.font.Font(None, 14)
     source_toponym = "Кириши, Ленинградская 6"
     toponym = source_toponym
@@ -154,7 +156,8 @@ def main():
     picture = Picture(pygame.image.load(
         generator.get_from_toponym(toponym, str(delta / SCALE))[1]
     ))
-    x, y = generator.get_position()
+    g_x, g_y = map(float, generator.get_position())
+    x, y = g_x, g_y
     movement_delta = HALF_SCALE
     mov_slow = False
     pressed_button = None
@@ -235,9 +238,28 @@ def main():
                     print(f"\rДельта: {delta}; Медленнее: {mov_slow}",
                           end="")
             if event.type == pygame.MOUSEBUTTONDOWN:
+                ui_button_pressed = False
                 for button in buttons:
                     if button.hold(event.pos):
+                        ui_button_pressed = True
                         break
+                if event.button == 1 and not ui_button_pressed:
+                    # считаем долю смещения
+                    x, y = event.pos
+                    width_fraction = (x - half_width) / half_width
+                    height_fraction = (half_height - y) / half_height
+                    # добавляем долю от дельты
+                    x, y = map(float, generator.get_position())
+                    g_x += delta / SCALE * width_fraction
+                    g_y += delta / SCALE * height_fraction
+                    # picture.set_picture(pygame.image.load(
+                    #     generator.get_from_cords(
+                    #         str(g_x), str(g_y), str(delta / SCALE)
+                    #     )[1]
+                    # ))
+                    generator.get_from_toponym(
+                        str(g_x) + str(g_y), delta / SCALE)
+
             if event.type == pygame.MOUSEBUTTONUP:
                 for button in buttons:
                     if button.release(event.pos):
@@ -289,8 +311,7 @@ def main():
         interface.update(pygame.mouse.get_pos())
         interface.draw(screen)
         txt_surface = font.render(toponym, True, color)
-        width = max(200, txt_surface.get_width() + 10)
-        input_box.w = width
+        input_box.w = max(200, txt_surface.get_width() + 10)
         # Blit the text.
         screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
         # Blit the input_box rect.
